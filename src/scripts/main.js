@@ -24,6 +24,9 @@ const keys = {
 const enemies = [];
 const collectibles = [];
 
+let motionSupported = false;
+let tilt = { x: 0, y: 0 };
+
 function createEnemiesAndCollectibles() {
     enemies.length = 0;
     collectibles.length = 0;
@@ -94,6 +97,16 @@ function updateBallPosition() {
     if (keys.ArrowDown && ball.y + ball.radius < canvas.height) ball.y += ball.speed;
     if (keys.ArrowLeft && ball.x - ball.radius > 0) ball.x -= ball.speed;
     if (keys.ArrowRight && ball.x + ball.radius < canvas.width) ball.x += ball.speed;
+
+    // Movimento por sensores
+    if (motionSupported) {
+        ball.x += tilt.x * ball.speed * 0.5;
+        ball.y += tilt.y * ball.speed * 0.5;
+
+        // Limitar os movimentos dentro do canvas
+        ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
+        ball.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.y));
+    }
 }
 
 function updateEnemies() {
@@ -146,6 +159,16 @@ function resetGame() {
     createEnemiesAndCollectibles();
 }
 
+function handleMotion(event) {
+    if (!motionSupported) {
+        motionSupported = true;
+        alert('Movimento por sensores ativado!');
+    }
+
+    tilt.x = event.accelerationIncludingGravity.x || 0;
+    tilt.y = -(event.accelerationIncludingGravity.y || 0);
+}
+
 function gameLoop() {
     clearCanvas();
     updateBallPosition();
@@ -164,6 +187,26 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => {
     if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
 });
+
+document.addEventListener('click', () => {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    window.addEventListener('devicemotion', handleMotion);
+                } else {
+                    alert('Permissão para sensores negada.');
+                }
+            })
+            .catch(console.error);
+    } else {
+        window.addEventListener('devicemotion', handleMotion);
+    }
+});
+
+if (/Mobi|Android/i.test(navigator.userAgent)) {
+    alert('Toque na tela para ativar os sensores de movimento.');
+}
 
 createEnemiesAndCollectibles();
 gameLoop();
