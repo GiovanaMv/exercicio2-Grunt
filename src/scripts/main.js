@@ -100,7 +100,7 @@ function updateBallPosition() {
 
     // Movimento por sensores
     if (motionSupported) {
-        ball.x += tilt.x * ball.speed * 0.5;
+        ball.x -= tilt.x * ball.speed * 0.5;
         ball.y += tilt.y * ball.speed * 0.5;
 
         // Limitar os movimentos dentro do canvas
